@@ -240,6 +240,38 @@ class main_page:
         #self.string_validation(df, 'COPY PASTE "NOM"')
         #self.string_validation(df, 'DEPARTEMENT')
 
+        def integer_converter_formatter(number):
+            # EU format for thousand and lakh with decimal aaa.aaa,aa
+            pattern_EU_with_dec = "^\d+\.\d+\,\d{2}$"
+            # EU format for thousand and lakh without decimal aaa.aaa
+            pattern_EU_without_dec = "^\d+\.\d{3}$"
+            # EU format for hundred with decimal aaa,aa
+            pattern_EU_hundred = "^\d{3}\,\d{2}$"
+
+            x = re.search(pattern_EU_with_dec, number)
+            y = re.search(pattern_EU_without_dec, number)
+            z = re.search(pattern_EU_hundred, number)
+            
+            if isinstance(number, str):
+                # if the number is not string, return as it is
+                # if the number is string
+                # Check if it in EUR or US format
+                # And convert it to aaaa.aa format
+                # this format is suitable for float/int convert using builtin method    
+                new_number = ""
+                if x is not None:
+                    new_number = number.replace(".","").replace(",",".")
+                    return (new_number)        
+                elif y is not None:
+                    new_number = number.replace(".","")
+                    return (new_number)            
+                elif z is not None:
+                    new_number = number.replace(",",".")
+                    return (new_number)        
+                return (re.sub("[,$]","",number))      
+            return number
+
+
         try: #handle cases where user might not select correct file format or not select any file/folder before clicking the button
             for i, row in df.iterrows():
                 startdate = df['4 - Offer Letter Components : OfferDatePositionStart'][i]
@@ -251,12 +283,12 @@ class main_page:
                            'START_DATE' : datetime.strptime(startdate, "%m/%d/%Y").strftime("%d %B %Y"),
                            'TITLE': df['Job : External Job Title'][i],
                            'LOCATION': df['Company/Location (search) : Street'][i],
-                           'MANAGER_TITLE': "",
+                           'MANAGER_TITLE': df['Hiring Manager : Full Name: First Last'][i],
                            'WAGE': df['4 - Offer Letter Components : OfferBaseSalary'][i],
-                           'TOTAL_BONUS': int(df['4 - Offer Letter Components : OfferSplitBonusYear2'][i]) + int(df['4 - Offer Letter Components : OfferSplitBonusYear1'][i]),
-                           'BONUS_1': df['4 - Offer Letter Components : OfferSplitBonusYear2'][i],
-                           'BONUS_2': df['4 - Offer Letter Components : OfferSplitBonusYear1'][i],
-                           'DATE' : (currentdate - DT.timedelta(days=7)) #7 days before the current date
+                           'TOTAL_BONUS': int(float(integer_converter_formatter(df['4 - Offer Letter Components : OfferSplitBonusYear2'][i]))) + int(float(integer_converter_formatter(df['4 - Offer Letter Components : OfferSplitBonusYear1'][i]))),
+                           'BONUS_1': int(float(integer_converter_formatter(df['4 - Offer Letter Components : OfferSplitBonusYear2'][i]))),
+                           'BONUS_2': int(float(integer_converter_formatter(df['4 - Offer Letter Components : OfferSplitBonusYear1'][i]))),
+                           'DATE' : (currentdate + DT.timedelta(days=7)) #7 days after the current date
                            }
                                 
                 doc.render(context)
